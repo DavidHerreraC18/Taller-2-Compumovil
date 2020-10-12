@@ -9,13 +9,14 @@ import android.widget.ImageButton;
 
 public class MainActivity extends AppCompatActivity {
 
-    ImageButton btnContacto, btnCamara;
+    ImageButton btnContacto, btnCamara, btnMapa;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         btnCamara = findViewById(R.id.btnCamara);
         btnContacto = findViewById(R.id.btnContacto);
+        btnMapa = findViewById(R.id.btnMapa);
         btnContacto.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
@@ -28,6 +29,11 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(getBaseContext(),ImagenCamaraActivity.class));
             }
         });
-
+        btnMapa.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(getBaseContext(),MapsActivity.class));
+            }
+        });
     }
 }
