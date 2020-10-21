@@ -9,6 +9,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -44,12 +45,24 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.maps.DirectionsApi;
+import com.google.maps.DirectionsApiRequest;
+import com.google.maps.GeoApiContext;
+import com.google.maps.model.DirectionsLeg;
+import com.google.maps.model.DirectionsResult;
+import com.google.maps.model.DirectionsRoute;
+import com.google.maps.model.DirectionsStep;
+import com.google.maps.model.EncodedPolyline;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -62,6 +75,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static final double upperRightLatitude= 11.983639;
     public static final double upperRigthLongitude= -71.869905;
     private GoogleMap mMap;
+    private Marker mMarkerPosActual;
+    private Polyline mPolyline;
+    private Marker mMarkerSelect;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private LocationRequest mLocationRequest;
     private LocationCallback mLocationCallback;
@@ -71,16 +87,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Sensor lightSensor;
     SensorEventListener lightSensorListener;
     LatLng UA;
+    LatLng savedLastMarkerPosition;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        mapSearch = findViewById(R.id.mapSearch);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         lightSensorListener = new SensorEventListener() {
@@ -90,9 +109,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if (sensorEvent.values[0] < 5000) {
                         Log.i("MAPS", "DARK MAP " + sensorEvent.values[0]);
                         mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(MapsActivity.this, R.raw.dark_style_map));
+                        mapSearch.setTextColor(Color.parseColor("#FFFFFF"));
+                        mapSearch.setHintTextColor(Color.parseColor("#FFFFFF"));
                     } else {
                         Log.i("MAPS", "LIGHT MAP " + sensorEvent.values[0]);
                         mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(MapsActivity.this, R.raw.light_style_map));
+                        mapSearch.setTextColor(Color.parseColor("#000000"));
+                        mapSearch.setHintTextColor(Color.parseColor("#000000"));
                     }
                 }
             }
@@ -111,15 +134,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (location != null) {
                     //mMap.clear();
                     LatLng ubicacionactual = new LatLng(location.getLatitude(),location.getLongitude());
+                    if(mMarkerPosActual != null)
+                    {
+                        mMarkerPosActual.remove();
+                    }
+                    mMarkerPosActual = mMap.addMarker(new MarkerOptions().position(ubicacionactual).title("Ubicacion Actual"));
+                    if(!ubicacionactual.equals(UA))
+                    {
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(ubicacionactual));
+                        if(mMarkerSelect != null)
+                        {
+                            UA = ubicacionactual;
+                            setMarker();
+                        }
+                    }
                     UA = ubicacionactual;
-                    mMap.addMarker(new MarkerOptions().position(ubicacionactual).title("Ubicacion Actual"));
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(ubicacionactual));
-                    stopLocationUpdates();
+
+                    //stopLocationUpdates();
                 }
             }
         };
         mLocationRequest = createLocationRequest();
-        mapSearch = findViewById(R.id.mapSearch);
         mapSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int actionid, KeyEvent keyEvent) {
@@ -132,21 +167,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             if (addresses != null && !addresses.isEmpty()) {
                                 Address addressResult = addresses.get(0);
                                 LatLng position = new LatLng(addressResult.getLatitude(), addressResult.getLongitude());
+                                savedLastMarkerPosition = position;
                                 if (mMap != null) {
-                                    MarkerOptions myMarkerOptions = new MarkerOptions();
-                                    myMarkerOptions.position(position);
-                                    myMarkerOptions.title(addressResult.getAddressLine(0));
-                                    myMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
-                                    mMap.addMarker(myMarkerOptions);
-                                    mMap.moveCamera(CameraUpdateFactory.newLatLng(position));
-                                    Double distancia = distance(UA.latitude,UA.longitude,position.latitude,position.longitude);
-                                    Toast.makeText(getBaseContext(), "Esta a una distancia de: "+ distancia+ " KM", Toast.LENGTH_SHORT).show();
+                                    setMarker();
                                 }
-                            } else {Toast.makeText(MapsActivity.this, "Dirección no encontrada", Toast.LENGTH_SHORT).show();}
+                            } else {Toast.makeText(MapsActivity.this, "Dirección no encontrada", Toast.LENGTH_LONG).show();}
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                    } else {Toast.makeText(MapsActivity.this, "La dirección esta vacía", Toast.LENGTH_SHORT).show();}
+                    } else {Toast.makeText(MapsActivity.this, "La dirección esta vacía", Toast.LENGTH_LONG).show();}
                 }
                 return false;
             }
@@ -165,6 +194,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
         }
+    }
+
+    private void setMarker()
+    {
+        LatLng position = savedLastMarkerPosition;
+        if(mMarkerSelect!= null)
+        {
+            mMarkerSelect.remove();
+            mPolyline.remove();
+        }
+        MarkerOptions myMarkerOptions = new MarkerOptions();
+        myMarkerOptions.position(position);
+        myMarkerOptions.title(geoCoderSearch(position));
+        myMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+        mMarkerSelect = mMap.addMarker(myMarkerOptions);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(position));
+        String TAG = "Taller2";
+        double distancia = distance(UA.latitude,UA.longitude,position.latitude,position.longitude);
+        Toast.makeText(getBaseContext(), "Esta a una distancia de: "+ distancia+ " KM", Toast.LENGTH_LONG).show();
     }
 
     protected LocationRequest createLocationRequest() {
@@ -282,16 +330,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-                //mMap.clear();
-                MarkerOptions myMarkerOptions = new MarkerOptions();
-                myMarkerOptions.position(latLng);
-                myMarkerOptions.title(geoCoderSearch(latLng));
-                myMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
-                mMap.addMarker(myMarkerOptions);
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-                Double distancia = distance(UA.latitude,UA.longitude,latLng.latitude,latLng.longitude);
-                Toast.makeText(getBaseContext(), "Esta a una distancia de: "+ distancia+ " KM", Toast.LENGTH_SHORT).show();
-
+                String TAG = "Taller2";
+                savedLastMarkerPosition = latLng;
+                setMarker();
             }
         });
         // Add a marker in Sydney and move the camera

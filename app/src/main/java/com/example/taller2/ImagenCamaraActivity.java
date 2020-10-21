@@ -16,6 +16,7 @@ import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -36,12 +37,14 @@ public class ImagenCamaraActivity extends AppCompatActivity {
         btnElegido.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
+                PermissionUtil.requestPermission(ImagenCamaraActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE,"Es para el funcionamiento",IMAGE_PICKER_REQUEST);
                 abrirAlmacenamiento();
             }
         });
         btnCamara.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
+                PermissionUtil.requestPermission(ImagenCamaraActivity.this, Manifest.permission.CAMERA,"Es para el funcionamiento",REQUEST_IMAGE_CAPTURE);
                 takePicture();
             }
         });
@@ -49,7 +52,6 @@ public class ImagenCamaraActivity extends AppCompatActivity {
 
     private void abrirAlmacenamiento()
     {
-        PermissionUtil.requestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE,"Es para el funcionamiento",IMAGE_PICKER_REQUEST);
         if (ContextCompat.checkSelfPermission(getBaseContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
         {
             Intent pickImage = new Intent(Intent.ACTION_PICK);
@@ -60,7 +62,6 @@ public class ImagenCamaraActivity extends AppCompatActivity {
 
     private void takePicture()
     {
-        PermissionUtil.requestPermission(this, Manifest.permission.CAMERA,"Es para el funcionamiento",REQUEST_IMAGE_CAPTURE);
         if (ContextCompat.checkSelfPermission(getBaseContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
         {
             Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -75,13 +76,12 @@ public class ImagenCamaraActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
-            case REQUEST_IMAGE_CAPTURE: {
+            case REQUEST_IMAGE_CAPTURE:
                 takePicture();
-            }
-            break;
-            case IMAGE_PICKER_REQUEST:{
+                return;
+            case IMAGE_PICKER_REQUEST:
                 abrirAlmacenamiento();
-            }
+                return;
 
         }
     }
@@ -105,7 +105,7 @@ public class ImagenCamaraActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 }
-                break;
+                return;
             case REQUEST_IMAGE_CAPTURE:
                 if(resultCode==RESULT_OK)
                 {
@@ -113,7 +113,8 @@ public class ImagenCamaraActivity extends AppCompatActivity {
                     Bitmap imageBitmap=(Bitmap)extras.get("data");
                     image.setImageBitmap(imageBitmap);
                 }
-                break;
+                return;
         }
+        setContentView(R.layout.activity_imagen_camara);
     }
 }

@@ -24,6 +24,9 @@
         android:ems="10"
         android:inputType="text"
         android:imeOptions="actionSend"
+        android:textColor="@color/colorWhite"
+        android:textColorHint="@color/colorWhite"
+        android:textStyle="bold"
         android:hint="direccion..." />
 
 </FrameLayout>

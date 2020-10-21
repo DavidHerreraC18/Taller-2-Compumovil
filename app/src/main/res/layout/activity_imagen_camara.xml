@@ -19,15 +19,16 @@
 
         <ImageView
             android:id="@+id/imagenElegida"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
             android:layout_marginStart="50dp"
-            android:layout_marginTop="50dp"
+            android:layout_marginTop="80dp"
             android:layout_marginEnd="50dp"
-            android:layout_marginBottom="50dp"
+            android:layout_marginBottom="80dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            android:scaleType="fitXY"
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -37,18 +38,20 @@
         android:layout_height="1dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.904">
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <Button
         android:id="@+id/btnElegir"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginEnd="50dp"
-        android:text="Elegir"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:text="Seleccionar Imagen"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/constraintLayout5"
         app:layout_constraintStart_toStartOf="parent"
@@ -56,10 +59,10 @@
 
     <Button
         android:id="@+id/btnCamara"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginEnd="50dp"
+        android:layout_width="0dp"
+        android:layout_height="47dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         android:text="Camara"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
